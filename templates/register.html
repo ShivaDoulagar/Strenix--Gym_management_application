@@ -1,0 +1,270 @@
+{% extends 'layout.html' %}
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+{% endblock %}
+{% block content %}
+
+<div class="register-container">
+    <div class="register-content">
+        <div class="register-form-wrapper">
+            <div class="register-header text-center">
+                <div class="brand-logo">
+                    <i class="fas fa-dumbbell"></i>
+                </div>
+                <h1 class="brand-name">Strenix</h1>
+                <p class="tagline">Begin your transformation journey</p>
+            </div>
+            
+            <div class="card register-card">
+                <div class="card-body">
+                    <h2 class="card-title">Create Your Account</h2>
+                    <p class="card-subtitle">Join thousands of fitness enthusiasts achieving their goals</p>
+                    
+                    <form method="POST" id="registerForm" class="register-form needs-validation" novalidate>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="name" name="name" placeholder=" " required>
+                            <label for="name">
+                                <i class="fas fa-user"></i>Full Name
+                            </label>
+                            <div class="invalid-feedback">
+                                Please provide your full name.
+                            </div>
+                        </div>
+                        
+                        <div class="form-floating">
+                            <input type="email" class="form-control" id="email" name="email" placeholder=" " required>
+                            <label for="email">
+                                <i class="fas fa-envelope"></i>Email Address
+                            </label>
+                            <div class="invalid-feedback">
+                                Please provide a valid email address.
+                            </div>
+                        </div>
+                        
+                        <div class="form-floating password-field">
+                            <input type="password" class="form-control" id="password" name="password" placeholder=" " required minlength="8">
+                            <label for="password">
+                                <i class="fas fa-lock"></i>Password
+                            </label>
+                            <button class="password-toggle" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <div class="invalid-feedback">
+                                Password must be at least 8 characters long.
+                            </div>
+                            <div class="password-strength">
+                                <div class="strength-meter">
+                                    <div class="strength-bar"></div>
+                                </div>
+                                <span class="strength-text">Password strength</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-floating password-field">
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder=" " required>
+                            <label for="confirmPassword">
+                                <i class="fas fa-lock"></i>Confirm Password
+                            </label>
+                            <button class="password-toggle" type="button" id="toggleConfirmPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <div class="invalid-feedback">
+                                Passwords do not match.
+                            </div>
+                        </div>
+                        
+                        <div class="form-check-custom">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a>
+                            </label>
+                            <div class="invalid-feedback">
+                                You must agree to our terms and conditions.
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary register-btn w-100">
+                            <span class="btn-text">Create Account</span>
+                            <i class="fas fa-arrow-right btn-icon"></i>
+                        </button>
+                    </form>
+                    
+                    <div class="register-footer">
+                        <p class="login-prompt">
+                            Already have an account? 
+                            <a href="{{ url_for('login') }}" class="login-link">Sign In</a>
+                        </p>
+                        
+                        <div class="feature-preview">
+                            <div class="feature-item">
+                                <i class="fas fa-dumbbell"></i>
+                                <span>Custom Workouts</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Progress Tracking</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-apple-alt"></i>
+                                <span>Nutrition Plans</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Password visibility toggles
+    function setupPasswordToggle(toggleId, inputId) {
+        const toggle = document.getElementById(toggleId);
+        if (!toggle) return;
+        
+        toggle.addEventListener('click', function() {
+            const passwordInput = document.getElementById(inputId);
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                this.classList.add('active');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                this.classList.remove('active');
+            }
+        });
+    }
+    
+    setupPasswordToggle('togglePassword', 'password');
+    setupPasswordToggle('toggleConfirmPassword', 'confirmPassword');
+    
+    // Password strength checker
+    const passwordInput = document.getElementById('password');
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            const strengthBar = document.querySelector('.strength-bar');
+            const strengthText = document.querySelector('.strength-text');
+            
+            if (!strengthBar || !strengthText) return;
+            
+            let strength = 0;
+            let strengthLabel = '';
+            
+            // Check password criteria
+            if (password.length >= 8) strength += 1;
+            if (password.match(/[a-z]/)) strength += 1;
+            if (password.match(/[A-Z]/)) strength += 1;
+            if (password.match(/[0-9]/)) strength += 1;
+            if (password.match(/[^a-zA-Z0-9]/)) strength += 1;
+            
+            // Remove all strength classes
+            strengthBar.className = 'strength-bar';
+            
+            // Update strength indicator
+            switch (strength) {
+                case 0:
+                case 1:
+                    strengthBar.classList.add('weak');
+                    strengthLabel = 'Weak';
+                    break;
+                case 2:
+                    strengthBar.classList.add('fair');
+                    strengthLabel = 'Fair';
+                    break;
+                case 3:
+                    strengthBar.classList.add('good');
+                    strengthLabel = 'Good';
+                    break;
+                case 4:
+                    strengthBar.classList.add('strong');
+                    strengthLabel = 'Strong';
+                    break;
+                case 5:
+                    strengthBar.classList.add('excellent');
+                    strengthLabel = 'Excellent';
+                    break;
+            }
+            
+            strengthText.textContent = password.length > 0 ? strengthLabel : 'Password strength';
+        });
+    }
+    
+    // Form validation with enhanced feedback
+    const form = document.getElementById('registerForm');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            
+            let isValid = true;
+            
+            if (password && confirmPassword && password.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity('Passwords do not match');
+                confirmPassword.classList.add('is-invalid');
+                isValid = false;
+            } else if (confirmPassword) {
+                confirmPassword.setCustomValidity('');
+                confirmPassword.classList.remove('is-invalid');
+            }
+            
+            if (!this.checkValidity()) {
+                isValid = false;
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            this.classList.add('was-validated');
+            
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    }
+    
+    // Real-time password confirmation validation
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', function() {
+            const password = document.getElementById('password');
+            if (password && this.value !== password.value && this.value.length > 0) {
+                this.setCustomValidity('Passwords do not match');
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('is-invalid');
+                if (this.value.length > 0 && password && this.value === password.value) {
+                    this.classList.add('is-valid');
+                }
+            }
+        });
+    }
+    
+    // Enhanced form field validation
+    document.querySelectorAll('.form-control').forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.checkValidity()) {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+            } else if (this.value.length > 0) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,260 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="edit-workout-container">
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2><i class="fas fa-edit me-2"></i>Edit Workout Plan</h2>
+                <p class="text-muted">Update your workout routine to better match your needs</p>
+            </div>
+        </div>
+        
+        <!-- Workout Plan Form -->
+        <form method="POST" action="{{ url_for('edit_workout_plan', id=plan.id) }}">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Workout Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Workout Name</label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ plan.title }}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3">{{ plan.description }}</textarea>
+                                <div class="form-text">Include targets, goals, or special instructions</div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="level" class="form-label">Difficulty Level</label>
+                                    <select class="form-select" id="level" name="level" required>
+                                        <option value="beginner" {% if plan.level == 'beginner' %}selected{% endif %}>Beginner</option>
+                                        <option value="intermediate" {% if plan.level == 'intermediate' %}selected{% endif %}>Intermediate</option>
+                                        <option value="advanced" {% if plan.level == 'advanced' %}selected{% endif %}>Advanced</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="duration" class="form-label">Duration (minutes)</label>
+                                    <input type="number" class="form-control" id="duration" name="duration" min="1" value="{{ plan.duration or '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Exercises</h5>
+                            <button type="button" class="btn btn-sm btn-primary" id="add-exercise-btn">
+                                <i class="fas fa-plus me-1"></i> Add Exercise
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="exercises-container">
+                                <!-- Existing exercises will be displayed here -->
+                                {% for exercise in exercises %}
+                                <div class="exercise-item card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h6 class="exercise-number">Exercise {{ loop.index }}</h6>
+                                            <button type="button" class="btn btn-sm btn-outline-danger remove-exercise-btn">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Exercise Name</label>
+                                            <input type="text" class="form-control" name="exercise_name[]" value="{{ exercise.name }}" required>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Sets</label>
+                                                <input type="number" class="form-control" name="exercise_sets[]" min="1" value="{{ exercise.sets }}">
+                                            </div>
+                                            
+                                            <div class="col-md-8 mb-3">
+                                                <label class="form-label">Reps/Duration</label>
+                                                <input type="text" class="form-control" name="exercise_reps[]" 
+                                                       placeholder="e.g., 12 reps or 30 seconds" value="{{ exercise.reps }}">
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-1">
+                                            <label class="form-label">Notes</label>
+                                            <textarea class="form-control" name="exercise_notes[]" rows="2" 
+                                                      placeholder="Form tips, rest periods, etc.">{{ exercise.notes }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="text-center py-3" id="no-exercises" style="display: none;">
+                                <p class="text-muted mb-0">No exercises added yet. Click "Add Exercise" to start building your workout.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Tips</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="mb-0">
+                                <li class="mb-2">Start with a warm-up exercise</li>
+                                <li class="mb-2">Group exercises by muscle groups</li>
+                                <li class="mb-2">Mix strength and cardio for balanced workouts</li>
+                                <li class="mb-2">End with cooling down and stretching</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save me-1"></i> Update Workout Plan
+                                </button>
+                                <a href="{{ url_for('workout_plan', id=plan.id) }}" class="btn btn-outline-secondary">
+                                    Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Delete Plan</h5>
+                            <p class="text-muted small">This action cannot be undone.</p>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash-alt me-1"></i> Delete This Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete "<strong>{{ plan.title }}</strong>"?</p>
+                        <p class="text-danger">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form action="{{ url_for('delete_workout_plan', id=plan.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const exercisesContainer = document.getElementById('exercises-container');
+    const addExerciseBtn = document.getElementById('add-exercise-btn');
+    const noExercisesMessage = document.getElementById('no-exercises');
+    
+    // Check if there are exercises
+    function checkExercises() {
+        if (exercisesContainer.children.length === 0) {
+            noExercisesMessage.style.display = 'block';
+        } else {
+            noExercisesMessage.style.display = 'none';
+            
+            // Update exercise numbers
+            const exercises = exercisesContainer.querySelectorAll('.exercise-item');
+            exercises.forEach((exercise, index) => {
+                exercise.querySelector('.exercise-number').textContent = `Exercise ${index + 1}`;
+            });
+        }
+    }
+    
+    // Add new exercise
+    addExerciseBtn.addEventListener('click', function() {
+        const exerciseTemplate = `
+            <div class="exercise-item card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <h6 class="exercise-number">Exercise ${exercisesContainer.children.length + 1}</h6>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-exercise-btn">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Exercise Name</label>
+                        <input type="text" class="form-control" name="exercise_name[]" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Sets</label>
+                            <input type="number" class="form-control" name="exercise_sets[]" min="1">
+                        </div>
+                        
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Reps/Duration</label>
+                            <input type="text" class="form-control" name="exercise_reps[]" 
+                                   placeholder="e.g., 12 reps or 30 seconds">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-1">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="exercise_notes[]" rows="2" 
+                                  placeholder="Form tips, rest periods, etc."></textarea>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add the new exercise
+        exercisesContainer.insertAdjacentHTML('beforeend', exerciseTemplate);
+        checkExercises();
+        
+        // Add event listeners to the new remove buttons
+        const removeButtons = exercisesContainer.querySelectorAll('.remove-exercise-btn');
+        removeButtons[removeButtons.length - 1].addEventListener('click', handleRemoveExercise);
+    });
+    
+    // Handle remove exercise
+    function handleRemoveExercise() {
+        this.closest('.exercise-item').remove();
+        checkExercises();
+    }
+    
+    // Add event listeners to initial remove buttons
+    const initialRemoveButtons = document.querySelectorAll('.remove-exercise-btn');
+    initialRemoveButtons.forEach(button => {
+        button.addEventListener('click', handleRemoveExercise);
+    });
+    
+    // Initial check
+    checkExercises();
+});
+</script>
+{% endblock %}
+
+{% endblock %}

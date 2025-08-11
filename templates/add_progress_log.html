@@ -1,0 +1,11 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Add Progress Log</h2>
+<form method="POST">
+    Date: <input type="date" name="date" required><br>
+    Weight (kg): <input type="number" step="0.01" name="weight"><br>
+    Body Fat (%): <input type="number" step="0.01" name="body_fat_percentage"><br>
+    Notes: <textarea name="notes"></textarea><br>
+    <input type="submit" value="Add">
+</form>
+{% endblock %}

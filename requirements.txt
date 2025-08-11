@@ -1,0 +1,10 @@
+Flask==2.3.3
+Flask-Login==0.6.2
+Flask-Migrate==4.0.5
+Flask-SQLAlchemy==3.1.1
+Werkzeug==2.3.8
+python-dotenv==1.0.1
+email-validator==2.1.0.post1  # optional, useful for validating email inputs
+opencv-python==4.8.1.78
+mediapipe==0.10.21
+numpy==1.26.2

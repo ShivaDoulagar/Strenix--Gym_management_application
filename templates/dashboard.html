@@ -1,0 +1,288 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="dashboard-container">
+    <div class="container py-4">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner mb-4">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="welcome-card">
+                        <div class="welcome-content">
+                            <h1>Welcome back, <span class="user-name">{{ user.name }}</span></h1>
+                            <p class="welcome-message">Ready to crush your fitness goals today?</p>
+                            <div class="quick-stats">
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-fire"></i>
+                                    </div>
+                                    <div class="stat-data">
+                                        <span class="stat-value">{{ calories_burned_week }}</span>
+                                        <span class="stat-label">Calories Burned This Week</span>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-dumbbell"></i>
+                                    </div>
+                                    <div class="stat-data">
+                                        <span class="stat-value">{{ workouts_completed }}</span>
+                                        <span class="stat-label">Workouts Completed</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mt-4 mt-lg-0">
+                    <div class="streak-card">
+                        <div class="streak-content">
+                            <div class="streak-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="streak-info">
+                                <span class="streak-value">{{ streak }}</span>
+                                <span class="streak-label">Day Streak</span>
+                            </div>
+                            <div class="streak-message">Keep it up! You're on fire!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="row g-4">
+            <!-- Today's Plan -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card p-4">
+                    <div class="card-header ">
+                        <h3><i class="fas fa-calendar-day me-2"></i>Today's Plan</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="workout-plan">
+                            <h4>{{ today_workout.name }}</h4>
+                            <div class="workout-details">
+                                <span><i class="fas fa-clock me-1"></i> {{ today_workout.duration }} minutes</span>
+                                <span><i class="fas fa-bolt me-1"></i> {{ today_workout.calories }} calories</span>
+                            </div>
+                            <div class="workout-progress mt-3">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ today_workout.progress }}%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    {% if today_workout.progress == 0 %}
+                                        Not started
+                                    {% elif today_workout.progress == 100 %}
+                                        Completed
+                                    {% else %}
+                                        {{ today_workout.progress }}% Complete
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 mt-3">
+                                <a href="{{ url_for('pose_detection') }}" class="btn btn-primary" target="_blank">
+                                    <i class="fas fa-running me-1"></i> Start Workout
+                                </a>
+                                {% if today_workout.workout_id %}
+                                    <a href="{{ url_for('workout_plan', id=today_workout.workout_id) }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-info-circle me-1"></i> View Details
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('add_workout_plan') }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-plus me-1"></i> Create Plan
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nutrition Summary -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card p-4">
+                    <div class="card-header">
+                        <h3><i class="fas fa-utensils me-2"></i>Nutrition Today</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="nutrition-summary">
+                            <div class="calorie-circle">
+                                <div class="circle-content">
+                                    <div class="calories-consumed">{{ total_calories|int }}</div>
+                                    <div class="calories-goal">/ {{ daily_calorie_goal }}</div>
+                                </div>
+                            </div>
+                            <div class="macro-breakdown">
+                                {% set protein_percent = (total_protein / (total_protein + total_carbs + total_fats) * 100)|int if (total_protein + total_carbs + total_fats) > 0 else 0 %}
+                                {% set carbs_percent = (total_carbs / (total_protein + total_carbs + total_fats) * 100)|int if (total_protein + total_carbs + total_fats) > 0 else 0 %}
+                                {% set fats_percent = (total_fats / (total_protein + total_carbs + total_fats) * 100)|int if (total_protein + total_carbs + total_fats) > 0 else 0 %}
+                                
+                                <div class="macro-item">
+                                    <div class="macro-label">Protein</div>
+                                    <div class="macro-bar">
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ protein_percent }}%"></div>
+                                        </div>
+                                        <div class="macro-value">{{ protein_percent }}%</div>
+                                    </div>
+                                </div>
+                                <div class="macro-item">
+                                    <div class="macro-label">Carbs</div>
+                                    <div class="macro-bar">
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ carbs_percent }}%"></div>
+                                        </div>
+                                        <div class="macro-value">{{ carbs_percent }}%</div>
+                                    </div>
+                                </div>
+                                <div class="macro-item">
+                                    <div class="macro-label">Fats</div>
+                                    <div class="macro-bar">
+                                        <div class="progress">
+                                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ fats_percent }}%"></div>
+                                        </div>
+                                        <div class="macro-value">{{ fats_percent }}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('add_nutrition_log') }}" class="btn btn-outline-primary mt-3"><i class="fas fa-plus me-1"></i> Log Meal</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Tracker -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card p-4">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-line me-2"></i>Progress</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress-summary">
+                            <div class="weight-tracker">
+                                <div class="current-weight">
+                                    <span class="weight-value">{{ latest_progress.weight|int if latest_progress else 'N/A' }}</span>
+                                    <span class="weight-unit">lbs</span>
+                                </div>
+                                <div class="weight-change {{ 'down' if weight_change < 0 else 'up' if weight_change > 0 else '' }}">
+                                    {% if weight_change != 0 %}
+                                        <i class="fas fa-arrow-{{ 'down' if weight_change < 0 else 'up' }}"></i> 
+                                        {{ weight_change|abs }} lbs this month
+                                    {% else %}
+                                        No change this month
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="progress-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-icon"><i class="fas fa-tape"></i></div>
+                                    <div class="metric-data">
+                                        <div class="metric-label">Body Fat</div>
+                                        <div class="metric-value">{{ latest_progress.body_fat_percentage }}%</div>
+                                        <div class="metric-change">{{ 'Updated' if latest_progress else 'No data' }}</div>
+                                    </div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-icon"><i class="fas fa-heartbeat"></i></div>
+                                    <div class="metric-data">
+                                        <div class="metric-label">Last Update</div>
+                                        <div class="metric-value">{{ latest_progress.date.strftime('%b %d') if latest_progress else 'N/A' }}</div>
+                                        <div class="metric-change">{{ latest_progress.notes|truncate(20) if latest_progress and latest_progress.notes else 'No notes' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('add_progress_log') }}" class="btn btn-outline-primary mt-3"><i class="fas fa-plus me-1"></i> Update Metrics</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Workouts -->
+            <div class="col-md-6 col-lg-8">
+                <div class="dashboard-card p-4">
+                    <div class="card-header">
+                        <h3><i class="fas fa-history me-2"></i>Recent Workouts</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="recent-workouts">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Workout</th>
+                                        <th>Level</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if recent_workouts %}
+                                        {% for workout in recent_workouts %}
+                                            <tr>
+                                                <td>{{ workout.created_at.strftime('%b %d') }}</td>
+                                                <td>{{ workout.title }}</td>
+                                                <td>
+                                                    {% if workout.level == 'beginner' %}
+                                                        <span class="badge bg-success">Beginner</span>
+                                                    {% elif workout.level == 'intermediate' %}
+                                                        <span class="badge bg-warning">Intermediate</span>
+                                                    {% elif workout.level == 'advanced' %}
+                                                        <span class="badge bg-danger">Advanced</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">{{ workout.level|capitalize }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ url_for('workout_plan', id=workout.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">No workouts created yet</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                            <a href="{{ url_for('workout_plans') }}" class="btn btn-outline-primary"><i class="fas fa-list me-1"></i> View All Workouts</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Goals -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card p-4">
+                    <div class="card-header">
+                        <h3><i class="fas fa-bullseye me-2"></i>Weekly Goals</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="goals-list">
+                            {% for goal in weekly_goals %}
+                                <div class="goal-item">
+                                    <div class="goal-checkbox">
+                                        <input type="checkbox" id="goal{{ loop.index }}" {% if goal.current >= goal.target %}checked{% endif %}>
+                                        <label for="goal{{ loop.index }}" class="form-check-label">{{ goal.name }}</label>
+                                    </div>
+                                    <div class="goal-progress">
+                                        <div class="progress">
+                                            {% set progress_percent = (goal.current / goal.target * 100)|int %}
+                                            <div class="progress-bar bg-{{ 'success' if progress_percent >= 75 else 'warning' if progress_percent >= 40 else 'info' }}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ progress_percent }}%">
+                                            </div>
+                                        </div>
+                                        <div class="goal-counter">{{ goal.current }}/{{ goal.target }}</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <a href="#" class="btn btn-outline-primary mt-3"><i class="fas fa-edit me-1"></i> Edit Goals</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

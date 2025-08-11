@@ -1,0 +1,10 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Your Progress Logs</h2>
+<a href="{{ url_for('add_progress_log') }}">Add Log</a>
+<ul>
+    {% for log in logs %}
+        <li>{{ log.date }} - {{ log.weight }} kg, {{ log.body_fat_percentage }}% BF</li>
+    {% endfor %}
+</ul>
+{% endblock %}

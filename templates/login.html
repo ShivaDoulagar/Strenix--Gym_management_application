@@ -1,0 +1,64 @@
+{% extends 'layout.html' %}
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+{% block content %}
+
+<div class="login-container">
+    <div class="login-content">
+        <div class="login-form-wrapper">
+            <div class="login-header text-center">
+                <div class="brand-logo">
+                    <i class="fas fa-dumbbell"></i>
+                </div>
+                <h1 class="brand-name">Strenix</h1>
+                <p class="tagline">Transform your fitness journey</p>
+            </div>
+            
+            <div class="card login-card">
+                <div class="card-body">
+                    <h2 class="card-title text-center">Welcome Back</h2>
+                    <p class="card-subtitle text-center">Sign in to continue your fitness journey</p>
+                    
+                    <form method="POST" class="login-form">
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                            <label for="email">
+                                <i class="fas fa-envelope me-2"></i>Email Address
+                            </label>
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                            <label for="password">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                        </div>
+                        
+                        <div class="form-options">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                                <label class="form-check-label" for="remember">Remember me</label>
+                            </div>
+                            <a href="#" class="forgot-password">Forgot password?</a>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary login-btn w-100">
+                            <span class="btn-text">Sign In</span>
+                            <i class="fas fa-arrow-right btn-icon"></i>
+                        </button>
+                    </form>
+                    
+                    <div class="login-footer">
+                        <p class="signup-prompt">
+                            Don't have an account? 
+                            <a href="{{ url_for('register') }}" class="register-link">Create Account</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

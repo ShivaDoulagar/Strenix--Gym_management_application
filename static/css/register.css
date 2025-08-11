@@ -1,0 +1,598 @@
+/*
+    Strenix - Fixed Register Page Styles
+    Compact design that fits in single screen without scrolling
+*/
+
+/* -- 1. REGISTER PAGE LAYOUT -- */
+body:has(.register-container) {
+    padding-top: 0 !important;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+body:has(.register-container) .navbar,
+body:has(.register-container) footer,
+body:has(.register-container) .flash-messages {
+    display: none !important;
+}
+
+.register-container {
+    min-height: 100vh;
+    width: 100vw;
+    padding: 1rem 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, 
+        var(--color-eggshell) 0%, 
+        rgba(248, 242, 220, 0.7) 50%, 
+        rgba(255, 255, 255, 0.9) 100%
+    );
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Background pattern - simplified */
+.register-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 15% 25%, rgba(158, 98, 64, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 85% 75%, rgba(129, 173, 200, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.register-content {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* -- 2. SIMPLIFIED ANIMATIONS -- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.register-form-wrapper {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* -- 3. COMPACT BRAND HEADER -- */
+.register-header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.brand-logo {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--color-jasper), #b73e2f);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    box-shadow: 0 4px 16px rgba(205, 70, 49, 0.3);
+}
+
+.brand-logo i {
+    color: white;
+    font-size: 1.2rem;
+}
+
+.brand-name {
+    font-size: 1.8rem;
+    color: var(--color-raw-umber);
+    margin-bottom: 0.25rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.tagline {
+    color: var(--color-text-muted);
+    font-style: italic;
+    font-size: 0.85rem;
+    margin-bottom: 0;
+    font-weight: 400;
+}
+
+/* -- 4. COMPACT REGISTER CARD -- */
+.register-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(158, 98, 64, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(158, 98, 64, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+.register-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-jasper), var(--color-carolina-blue), var(--color-buff));
+}
+
+.register-card .card-body {
+    padding: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.card-title {
+    font-size: 1.4rem;
+    color: var(--color-raw-umber);
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    letter-spacing: -0.25px;
+    text-align: center;
+}
+
+.card-subtitle {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    margin-bottom: 1.25rem;
+    font-weight: 400;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* -- 5. FIXED FORM STYLES -- */
+.form-floating {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.form-floating > .form-control {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 2px solid rgba(158, 98, 64, 0.15) !important;
+    border-radius: 12px !important;
+    padding: 1.25rem 0.75rem 0.5rem !important;
+    height: auto !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    color: var(--color-text) !important;
+    box-shadow: 0 2px 4px rgba(158, 98, 64, 0.05) !important;
+}
+
+.form-floating > .form-control::placeholder {
+    color: transparent !important;
+}
+
+.form-floating > .form-control:focus {
+    border-color: var(--color-jasper) !important;
+    background: rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 0 0 3px rgba(205, 70, 49, 0.15) !important;
+    outline: none !important;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    color: var(--color-jasper) !important;
+    transform: scale(0.85) translateY(-0.6rem) translateX(0.15rem) !important;
+    font-weight: 600 !important;
+}
+
+.form-floating > label {
+    padding: 0.75rem !important;
+    color: var(--color-text-muted) !important;
+    font-weight: 500 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    align-items: center !important;
+    pointer-events: none !important;
+    font-size: 0.9rem !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+}
+
+.form-floating > label i {
+    color: var(--color-jasper);
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+/* -- 6. PASSWORD FIELD FIXES -- */
+.password-field {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    z-index: 10;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.password-toggle:hover {
+    background: rgba(158, 98, 64, 0.1);
+    color: var(--color-jasper);
+}
+
+.password-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(205, 70, 49, 0.15);
+}
+
+/* Password strength indicator */
+.password-strength {
+    margin-top: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.form-floating:has(#password:not(:placeholder-shown)) .password-strength {
+    opacity: 1;
+}
+
+.strength-meter {
+    width: 100%;
+    height: 3px;
+    background: rgba(158, 98, 64, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.strength-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: all 0.4s ease;
+    width: 0;
+}
+
+.strength-bar.weak {
+    background: #e74c3c;
+    width: 20%;
+}
+
+.strength-bar.fair {
+    background: #f39c12;
+    width: 40%;
+}
+
+.strength-bar.good {
+    background: #f1c40f;
+    width: 60%;
+}
+
+.strength-bar.strong {
+    background: #2ecc71;
+    width: 80%;
+}
+
+.strength-bar.excellent {
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    width: 100%;
+}
+
+.strength-text {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+/* -- 7. FORM VALIDATION STYLES -- */
+.form-control.is-valid {
+    border-color: var(--color-carolina-blue) !important;
+    background-image: none !important;
+}
+
+.form-control.is-invalid {
+    border-color: var(--color-jasper) !important;
+    background-image: none !important;
+}
+
+.invalid-feedback {
+    color: var(--color-jasper);
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* -- 8. COMPACT CHECKBOX -- */
+.form-check-custom {
+    margin-bottom: 1.25rem;
+    padding: 0.75rem;
+    background: rgba(248, 242, 220, 0.3);
+    border-radius: 10px;
+    border: 1px solid rgba(158, 98, 64, 0.1);
+}
+
+.form-check-custom .form-check-input {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(158, 98, 64, 0.3);
+    border-radius: 4px;
+    background-color: transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    margin-top: 0.125rem;
+}
+
+.form-check-custom .form-check-input:checked {
+    background-color: var(--color-jasper);
+    border-color: var(--color-jasper);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+}
+
+.form-check-custom .form-check-input:focus {
+    box-shadow: 0 0 0 2px rgba(205, 70, 49, 0.15);
+    outline: none;
+}
+
+.form-check-custom .form-check-label {
+    color: var(--color-text);
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1.3;
+}
+
+.terms-link {
+    color: var(--color-jasper);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.terms-link:hover {
+    color: var(--color-raw-umber);
+    text-decoration: underline;
+}
+
+/* -- 9. COMPACT REGISTER BUTTON -- */
+.register-btn {
+    background: linear-gradient(135deg, var(--color-jasper), #b73e2f);
+    border: none;
+    border-radius: 12px;
+    padding: 0.875rem 1.5rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 16px rgba(205, 70, 49, 0.3);
+    cursor: pointer;
+    margin-bottom: 1.25rem;
+}
+
+.register-btn:hover {
+    background: linear-gradient(135deg, #b73e2f, var(--color-jasper));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(205, 70, 49, 0.4);
+    color: white;
+}
+
+.register-btn:active {
+    transform: translateY(-1px);
+}
+
+.btn-text {
+    font-weight: 700;
+}
+
+.btn-icon {
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.register-btn:hover .btn-icon {
+    transform: translateX(3px);
+}
+
+/* -- 10. COMPACT REGISTER FOOTER -- */
+.register-footer {
+    text-align: center;
+    border-top: 1px solid rgba(158, 98, 64, 0.1);
+    padding-top: 1rem;
+}
+
+.login-prompt {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    font-weight: 400;
+}
+
+.login-link {
+    color: var(--color-carolina-blue);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.login-link:hover {
+    color: var(--color-raw-umber);
+    text-decoration: underline;
+}
+
+/* Compact feature preview */
+.feature-preview {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.feature-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.25rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(158, 98, 64, 0.1);
+    transition: all 0.3s ease;
+    flex: 1;
+    max-width: 70px;
+}
+
+.feature-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateY(-2px);
+}
+
+.feature-item i {
+    font-size: 0.9rem;
+    color: var(--color-jasper);
+    padding: 0.25rem;
+    background: rgba(205, 70, 49, 0.1);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover i {
+    background: rgba(205, 70, 49, 0.2);
+}
+
+.feature-item span {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--color-text);
+    line-height: 1.1;
+}
+
+/* -- 11. RESPONSIVE DESIGN -- */
+@media (max-width: 768px) {
+    .register-container {
+        padding: 0.75rem 0;
+    }
+    
+    .register-content {
+        max-width: 100%;
+        padding: 0 0.75rem;
+    }
+    
+    .brand-name {
+        font-size: 1.6rem;
+    }
+    
+    .register-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .card-title {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .register-container {
+        padding: 0.5rem 0;
+    }
+    
+    .register-content {
+        padding: 0 0.5rem;
+    }
+    
+    .register-card .card-body {
+        padding: 1rem;
+    }
+    
+    .brand-name {
+        font-size: 1.4rem;
+    }
+    
+    .feature-preview {
+        gap: 0.5rem;
+    }
+    
+    .feature-item {
+        padding: 0.4rem 0.2rem;
+        max-width: 60px;
+    }
+    
+    .feature-item span {
+        font-size: 0.6rem;
+    }
+}
+
+/* -- 12. ACCESSIBILITY & FOCUS STYLES -- */
+.register-btn:focus,
+.form-control:focus,
+.form-check-input:focus,
+.password-toggle:focus,
+.terms-link:focus,
+.login-link:focus {
+    outline: none;
+}
+
+.register-btn:focus-visible,
+.form-control:focus-visible,
+.form-check-input:focus-visible,
+.password-toggle:focus-visible {
+    outline: 2px solid var(--color-jasper);
+    outline-offset: 2px;
+}
+
+/* Form validation success states */
+.form-floating:has(.form-control.is-valid) label i {
+    color: var(--color-carolina-blue);
+}
+
+.form-floating:has(.form-control.is-invalid) label i {
+    color: var(--color-jasper);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

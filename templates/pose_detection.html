@@ -1,0 +1,859 @@
+{% extends 'layout.html' %}
+{% block content %}
+<style>
+    .main-container {
+        display: flex;
+        gap: 20px;
+        padding: 20px;
+        height: calc(100vh - 100px);
+    }
+    
+    .video-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .video-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+        border-radius: 20px;
+        flex: 1;
+    }
+    
+    #video, #output {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: cover;
+    }
+    
+    .controls {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 8px;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .controls button {
+        padding: 12px 24px;
+        font-size: 16px;
+        border-radius: 12px;
+    }
+    
+    .form-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 400px;
+    }
+    
+    .exercise-info {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-score {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 12px;
+        font-size: 18px;
+        z-index: 10;
+    }
+    
+    .stats-container {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .stats-container .list-group-item {
+        flex: 1;
+        text-align: center;
+        border-radius: 12px;
+        padding: 10px;
+    }
+    
+    .stats-container .badge {
+        font-size: 16px;
+        padding: 8px 12px;
+    }
+    
+    .feedback-container {
+        margin-top: 15px;
+    }
+    
+    .feedback-container .alert {
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 0;
+    }
+    
+    @media (max-width: 992px) {
+        .main-container {
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .form-column {
+            max-width: 100%;
+        }
+        
+        .video-container {
+            height: 60vh;
+        }
+    }
+</style>
+
+<div class="main-container">
+    <div class="video-column">
+        <div class="video-container">
+            <video id="video" playsinline></video>
+            <canvas id="output"></canvas>
+            <div class="controls">
+                <button id="startButton" class="btn btn-success">
+                    <i class="fas fa-play me-2"></i>Start
+                </button>
+                <button id="stopButton" class="btn btn-danger" disabled>
+                    <i class="fas fa-stop me-2"></i>Stop
+                </button>
+            </div>
+            <div class="form-score" id="formScoreOverlay"></div>
+        </div>
+    </div>
+    
+    <div class="form-column">
+        <div class="exercise-info">
+            <h5 class="mb-3">Current Exercise: <span id="currentExercise">None</span></h5>
+            <div class="form-group mb-3">
+                <label for="exerciseSelect" class="form-label">Select Exercise</label>
+                <select class="form-select" id="exerciseSelect">
+                    <option value="squat">Squat</option>
+                    <option value="pushup">Push-up</option>
+                    <option value="deadlift">Deadlift</option>
+                    <option value="bench_press">Bench Press</option>
+                    <option value="lunge">Lunge</option>
+                    <option value="plank">Plank</option>
+                    <option value="shoulder_press">Shoulder Press</option>
+                    <option value="bicep_curl">Bicep Curl</option>
+                    <option value="tricep_extension">Tricep Extension</option>
+                    <option value="lateral_raise">Lateral Raise</option>
+                    <option value="romanian_deadlift">Romanian Deadlift</option>
+                    <option value="hip_thrust">Hip Thrust</option>
+                </select>
+            </div>
+            <div class="feedback-container">
+                <h6 class="mb-2">Feedback:</h6>
+                <div id="feedback" class="alert alert-info">
+                    Select an exercise and start the camera to begin.
+                </div>
+            </div>
+            <div class="stats-container">
+                <div class="list-group-item">
+                    Reps
+                    <span class="badge bg-primary rounded-pill" id="repCount">0</span>
+                </div>
+                <div class="list-group-item">
+                    Form Score
+                    <span class="badge bg-success rounded-pill" id="formScore">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='mediapipe/pose.js') }}"></script>
+<script src="{{ url_for('static', filename='mediapipe/camera_utils.js') }}"></script>
+<script src="{{ url_for('static', filename='mediapipe/drawing_utils.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('output');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const exerciseSelect = document.getElementById('exerciseSelect');
+        const feedback = document.getElementById('feedback');
+        const repCount = document.getElementById('repCount');
+        const formScore = document.getElementById('formScore');
+        const currentExercise = document.getElementById('currentExercise');
+        
+        let stream = null;
+        let isCounting = false;
+        let reps = 0;
+        
+        // Initialize MediaPipe Pose
+        const pose = new Pose({
+            locateFile: (file) => {
+                return `{{ url_for('static', filename='mediapipe/') }}${file}`;
+            }
+        });
+        
+        pose.setOptions({
+            modelComplexity: 2,
+            smoothLandmarks: true,
+            enableSegmentation: true,
+            smoothSegmentation: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        
+        pose.onResults(onResults);
+        
+        // Start camera
+        startButton.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    } 
+                });
+                video.srcObject = stream;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                currentExercise.textContent = exerciseSelect.options[exerciseSelect.selectedIndex].text;
+                
+                // Start pose detection
+                const camera = new Camera(video, {
+                    onFrame: async () => {
+                        await pose.send({ image: video });
+                    },
+                    width: 1280,
+                    height: 720
+                });
+                camera.start();
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                feedback.textContent = 'Error accessing camera. Please make sure you have granted camera permissions.';
+                feedback.className = 'alert alert-danger';
+            }
+        });
+        
+        // Stop camera
+        stopButton.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                currentExercise.textContent = 'None';
+                feedback.textContent = 'Camera stopped.';
+                feedback.className = 'alert alert-info';
+                reps = 0;
+                repCount.textContent = '0';
+                formScore.textContent = '0%';
+            }
+        });
+        
+        // Handle exercise selection
+        exerciseSelect.addEventListener('change', () => {
+            if (stream) {
+                currentExercise.textContent = exerciseSelect.options[exerciseSelect.selectedIndex].text;
+                feedback.textContent = 'Exercise changed. Continue your workout.';
+                feedback.className = 'alert alert-info';
+                reps = 0;
+                repCount.textContent = '0';
+                formScore.textContent = '0%';
+            }
+        });
+        
+        // Process pose detection results
+        function onResults(results) {
+            if (!results.poseLandmarks) {
+                return;
+            }
+            
+            // Draw pose landmarks on canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+            
+            // Calculate angles for the current exercise
+            const exercise = exerciseSelect.value;
+            const landmarks = results.poseLandmarks;
+            let angles = {};
+            
+            // Calculate common angles used across exercises
+            angles.kneeAngle = calculateAngle(
+                landmarks[24], // Left hip
+                landmarks[26], // Left knee
+                landmarks[28]  // Left ankle
+            );
+            
+            angles.backAngle = calculateAngle(
+                landmarks[12], // Left shoulder
+                landmarks[24], // Left hip
+                landmarks[26]  // Left knee
+            );
+            
+            angles.kneeTracking = calculateAngle(
+                landmarks[26], // Left knee
+                landmarks[28], // Left ankle
+                landmarks[32]  // Left foot index
+            );
+            
+            angles.hipDepth = calculateAngle(
+                landmarks[24], // Left hip
+                landmarks[26], // Left knee
+                landmarks[28]  // Left ankle
+            );
+            
+            angles.shoulderAngle = calculateAngle(
+                landmarks[12], // Left shoulder
+                landmarks[14], // Left elbow
+                landmarks[24]  // Left hip
+            );
+            
+            angles.bodyAngle = calculateAngle(
+                landmarks[12], // Left shoulder
+                landmarks[24], // Left hip
+                landmarks[26]  // Left knee
+            );
+            
+            angles.elbowAngle = calculateAngle(
+                landmarks[12], // Left shoulder
+                landmarks[14], // Left elbow
+                landmarks[16]  // Left wrist
+            );
+            
+            // Draw connections with color-coded feedback
+            const connectionColors = {
+                good: '#00FF00',    // Green for good form
+                warning: '#FFFF00', // Yellow for minor issues
+                error: '#FF0000'    // Red for major issues
+            };
+            
+            // Draw pose connections with appropriate colors
+            drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {
+                color: connectionColors.good,
+                lineWidth: 2
+            });
+            
+            // Draw landmarks with appropriate colors
+            drawLandmarks(ctx, results.poseLandmarks, {
+                color: connectionColors.good,
+                lineWidth: 1,
+                radius: 2
+            });
+            
+            // Analyze pose based on selected exercise
+            let analysis = analyzePose(exercise, landmarks, angles);
+            
+            // Update UI with feedback
+            feedback.textContent = analysis.feedback;
+            feedback.className = `alert ${analysis.isGoodForm ? 'alert-success' : 'alert-warning'}`;
+            
+            // Update stats
+            reps = analysis.reps;
+            repCount.textContent = reps;
+            formScore.textContent = `${analysis.formScore}%`;
+            
+            // Add visual feedback based on form analysis
+            if (analysis.formScore < 100) {
+                // Draw warning indicators for form issues
+                if (analysis.formScore < 60) {
+                    // Draw red circles around problem areas
+                    ctx.strokeStyle = connectionColors.error;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    // Add circles around relevant landmarks based on exercise
+                    switch (exercise) {
+                        case 'squat':
+                            // Circle around knees if tracking is off
+                            if (Math.abs(angles.kneeTracking - 90) >= 20) {
+                                ctx.arc(landmarks[26].x * canvas.width, landmarks[26].y * canvas.height, 20, 0, 2 * Math.PI);
+                                ctx.arc(landmarks[25].x * canvas.width, landmarks[25].y * canvas.height, 20, 0, 2 * Math.PI);
+                            }
+                            // Circle around hips if depth is insufficient
+                            if (angles.hipDepth >= 120) {
+                                ctx.arc(landmarks[24].x * canvas.width, landmarks[24].y * canvas.height, 20, 0, 2 * Math.PI);
+                            }
+                            break;
+                        case 'pushup':
+                            // Circle around shoulders if position is off
+                            if (angles.shoulderAngle <= 30) {
+                                ctx.arc(landmarks[12].x * canvas.width, landmarks[12].y * canvas.height, 20, 0, 2 * Math.PI);
+                            }
+                            // Circle around hips if alignment is off
+                            if (Math.abs(angles.bodyAngle - 180) >= 20) {
+                                ctx.arc(landmarks[24].x * canvas.width, landmarks[24].y * canvas.height, 20, 0, 2 * Math.PI);
+                            }
+                            break;
+                    }
+                    ctx.stroke();
+                } else if (analysis.formScore < 80) {
+                    // Draw yellow circles for minor issues
+                    ctx.strokeStyle = connectionColors.warning;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    // Similar logic as above but for warning indicators
+                    switch (exercise) {
+                        case 'squat':
+                            if (Math.abs(angles.kneeTracking - 90) >= 10) {
+                                ctx.arc(landmarks[26].x * canvas.width, landmarks[26].y * canvas.height, 15, 0, 2 * Math.PI);
+                                ctx.arc(landmarks[25].x * canvas.width, landmarks[25].y * canvas.height, 15, 0, 2 * Math.PI);
+                            }
+                            if (angles.hipDepth >= 90) {
+                                ctx.arc(landmarks[24].x * canvas.width, landmarks[24].y * canvas.height, 15, 0, 2 * Math.PI);
+                            }
+                            break;
+                        case 'pushup':
+                            if (angles.shoulderAngle <= 45) {
+                                ctx.arc(landmarks[12].x * canvas.width, landmarks[12].y * canvas.height, 15, 0, 2 * Math.PI);
+                            }
+                            if (Math.abs(angles.bodyAngle - 180) >= 10) {
+                                ctx.arc(landmarks[24].x * canvas.width, landmarks[24].y * canvas.height, 15, 0, 2 * Math.PI);
+                            }
+                            break;
+                    }
+                    ctx.stroke();
+                }
+            }
+            
+            // Add form score indicator
+            ctx.fillStyle = analysis.formScore >= 80 ? connectionColors.good : 
+                          analysis.formScore >= 60 ? connectionColors.warning : 
+                          connectionColors.error;
+            ctx.font = '20px Arial';
+            ctx.fillText(`Form Score: ${analysis.formScore}%`, 10, 30);
+            
+            ctx.restore();
+        }
+        
+        // Analyze pose for different exercises
+        function analyzePose(exercise, landmarks, angles) {
+            let feedback = '';
+            let isGoodForm = true;
+            let formScore = 100;
+            
+            switch (exercise) {
+                case 'squat':
+                    // Depth analysis
+                    if (angles.hipDepth < 90) {
+                        feedback += 'Good depth! ';
+                    } else if (angles.hipDepth < 120) {
+                        feedback += 'Go deeper! ';
+                        formScore -= 20;
+                        isGoodForm = false;
+                    } else {
+                        feedback += 'Not deep enough! ';
+                        formScore -= 40;
+                        isGoodForm = false;
+                    }
+                    
+                    // Back alignment analysis
+                    if (angles.backAngle > 160) {
+                        feedback += 'Back is straight. ';
+                    } else if (angles.backAngle > 140) {
+                        feedback += 'Keep your chest up! ';
+                        formScore -= 15;
+                        isGoodForm = false;
+                    } else {
+                        feedback += 'Back is rounding! ';
+                        formScore -= 30;
+                        isGoodForm = false;
+                    }
+                    
+                    // Knee tracking analysis
+                    if (Math.abs(angles.kneeTracking - 90) < 10) {
+                        feedback += 'Knees tracking well. ';
+                    } else if (Math.abs(angles.kneeTracking - 90) < 20) {
+                        feedback += 'Watch knee alignment! ';
+                        formScore -= 10;
+                        isGoodForm = false;
+                    } else {
+                        feedback += 'Knees caving in! ';
+                        formScore -= 20;
+                        isGoodForm = false;
+                    }
+                    
+                    // Add specific cues based on form issues
+                    if (formScore < 100) {
+                        if (angles.hipDepth >= 120) {
+                            feedback += 'Try to get your thighs parallel to the ground. ';
+                        }
+                        if (angles.backAngle <= 140) {
+                            feedback += 'Keep your chest up and core tight. ';
+                        }
+                        if (Math.abs(angles.kneeTracking - 90) >= 20) {
+                            feedback += 'Push your knees out over your toes. ';
+                        }
+                    } else {
+                        feedback = 'Perfect form! Keep your chest up and knees tracking over toes.';
+                    }
+                    
+                    // Count reps when returning to standing position
+                    if (angles.kneeAngle > 160 && !isCounting) {
+                        isCounting = true;
+                        reps++;
+                    } else if (angles.kneeAngle < 120) {
+                        isCounting = false;
+                    }
+                    break;
+                    
+                case 'pushup':
+                    // Depth analysis
+                    if (angles.elbowAngle < 90) {
+                        feedback += 'Good depth! ';
+                    } else if (angles.elbowAngle < 120) {
+                        feedback += 'Go lower! ';
+                        formScore -= 20;
+                        isGoodForm = false;
+                    } else {
+                        feedback += 'Not deep enough! ';
+                        formScore -= 40;
+                        isGoodForm = false;
+                    }
+                    
+                    // Body alignment analysis
+                    if (Math.abs(angles.bodyAngle - 180) < 10) {
+                        feedback += 'Body is straight. ';
+                    } else if (Math.abs(angles.bodyAngle - 180) < 20) {
+                        feedback += 'Keep your body straight! ';
+                        formScore -= 15;
+                        isGoodForm = false;
+                    } else {
+                        feedback += 'Body is sagging! ';
+                        formScore -= 30;
+                        isGoodForm = false;
+                    }
+                    
+                    // Shoulder position analysis
+                    if (angles.shoulderAngle > 45) {
+                        feedback += 'Shoulders are stable. ';
+                    } else if (angles.shoulderAngle > 30) {
+                        feedback += 'Keep shoulders back! ';
+                        formScore -= 10;
+                        isGoodForm = false;
+                    } else {
+                        feedback += 'Shoulders are rounding! ';
+                        formScore -= 20;
+                        isGoodForm = false;
+                    }
+                    
+                    // Core engagement analysis
+                    if (Math.abs(angles.bodyAngle - 180) < 10) {
+                        feedback += 'Core is engaged. ';
+                    } else if (Math.abs(angles.bodyAngle - 180) < 20) {
+                        feedback += 'Engage your core! ';
+                        formScore -= 10;
+                        isGoodForm = false;
+                    } else {
+                        feedback += 'Core is not engaged! ';
+                        formScore -= 20;
+                        isGoodForm = false;
+                    }
+                    
+                    // Add specific cues based on form issues
+                    if (formScore < 100) {
+                        if (angles.elbowAngle >= 120) {
+                            feedback += 'Try to get your chest closer to the ground. ';
+                        }
+                        if (Math.abs(angles.bodyAngle - 180) >= 20) {
+                            feedback += 'Keep your body in a straight line from head to heels. ';
+                        }
+                        if (angles.shoulderAngle <= 30) {
+                            feedback += 'Keep your shoulders back and down. ';
+                        }
+                        if (Math.abs(angles.bodyAngle - 180) >= 20) {
+                            feedback += 'Brace your core and keep your hips level. ';
+                        }
+                    } else {
+                        feedback = 'Perfect form! Keep your body straight and core tight.';
+                    }
+                    
+                    // Count reps when returning to starting position
+                    if (angles.elbowAngle > 160 && !isCounting) {
+                        isCounting = true;
+                        reps++;
+                    } else if (angles.elbowAngle < 120) {
+                        isCounting = false;
+                    }
+                    break;
+                    
+                case 'deadlift':
+                    // Basic deadlift form check
+                    const hipAngle = calculateAngle(
+                        landmarks[12], // Left shoulder
+                        landmarks[24], // Left hip
+                        landmarks[26]  // Left knee
+                    );
+                    
+                    if (hipAngle > 160) {
+                        feedback = 'Perfect form! Keep your back straight and chest up.';
+                        formScore = 100;
+                    } else if (hipAngle > 140) {
+                        feedback = 'Good form! Focus on keeping your back straight.';
+                        formScore = 80;
+                        isGoodForm = false;
+                    } else {
+                        feedback = 'Keep your back straight! Engage your core.';
+                        formScore = 60;
+                        isGoodForm = false;
+                    }
+                    break;
+                    
+                case 'lunge':
+                    // Check knee angles and hip alignment
+                    const frontKneeAngle = calculateAngle(
+                        landmarks[24], // Left hip
+                        landmarks[26], // Left knee
+                        landmarks[28]  // Left ankle
+                    );
+                    
+                    const backKneeAngle = calculateAngle(
+                        landmarks[23], // Right hip
+                        landmarks[25], // Right knee
+                        landmarks[27]  // Right ankle
+                    );
+                    
+                    if (frontKneeAngle < 90 && backKneeAngle < 90) {
+                        feedback = 'Perfect form! Keep your chest up and core engaged.';
+                        formScore = 100;
+                    } else if (frontKneeAngle < 90) {
+                        feedback = 'Good depth! Focus on getting your back knee lower.';
+                        formScore = 80;
+                        isGoodForm = false;
+                    } else {
+                        feedback = 'Go deeper! Try to get both knees to 90 degrees.';
+                        formScore = 60;
+                        isGoodForm = false;
+                    }
+                    
+                    // Count reps when returning to standing position
+                    if (frontKneeAngle > 160 && !isCounting) {
+                        isCounting = true;
+                        reps++;
+                    } else if (frontKneeAngle < 120) {
+                        isCounting = false;
+                    }
+                    break;
+                    
+                case 'shoulder_press':
+                    // Check arm angles and shoulder stability
+                    const armAngle = calculateAngle(
+                        landmarks[12], // Left shoulder
+                        landmarks[14], // Left elbow
+                        landmarks[16]  // Left wrist
+                    );
+                    
+                    if (armAngle > 160) {
+                        feedback = 'Perfect form! Keep your core tight and shoulders stable.';
+                        formScore = 100;
+                    } else if (armAngle > 120) {
+                        feedback = 'Good form! Try to fully extend your arms.';
+                        formScore = 80;
+                        isGoodForm = false;
+                    } else {
+                        feedback = 'Extend your arms fully! Keep your core engaged.';
+                        formScore = 60;
+                        isGoodForm = false;
+                    }
+                    
+                    // Count reps when arms are fully extended
+                    if (armAngle > 160 && !isCounting) {
+                        isCounting = true;
+                        reps++;
+                    } else if (armAngle < 120) {
+                        isCounting = false;
+                    }
+                    break;
+                    
+                case 'bicep_curl':
+                    // Check elbow angle and shoulder stability
+                    const curlAngle = calculateAngle(
+                        landmarks[12], // Left shoulder
+                        landmarks[14], // Left elbow
+                        landmarks[16]  // Left wrist
+                    );
+                    
+                    if (curlAngle < 45) {
+                        feedback = 'Perfect form! Keep your elbows close to your body.';
+                        formScore = 100;
+                    } else if (curlAngle < 90) {
+                        feedback = 'Good form! Focus on keeping your elbows stationary.';
+                        formScore = 80;
+                        isGoodForm = false;
+                    } else {
+                        feedback = 'Keep your elbows close to your body! Don\'t swing.';
+                        formScore = 60;
+                        isGoodForm = false;
+                    }
+                    
+                    // Count reps when returning to starting position
+                    if (curlAngle > 160 && !isCounting) {
+                        isCounting = true;
+                        reps++;
+                    } else if (curlAngle < 120) {
+                        isCounting = false;
+                    }
+                    break;
+                    
+                case 'tricep_extension':
+                    // Check elbow angle and shoulder position
+                    const tricepAngle = calculateAngle(
+                        landmarks[12], // Left shoulder
+                        landmarks[14], // Left elbow
+                        landmarks[16]  // Left wrist
+                    );
+                    
+                    if (tricepAngle < 45) {
+                        feedback = 'Perfect form! Keep your upper arms still.';
+                        formScore = 100;
+                    } else if (tricepAngle < 90) {
+                        feedback = 'Good form! Focus on moving only your forearms.';
+                        formScore = 80;
+                        isGoodForm = false;
+                    } else {
+                        feedback = 'Keep your upper arms still! Only move your forearms.';
+                        formScore = 60;
+                        isGoodForm = false;
+                    }
+                    
+                    // Count reps when returning to starting position
+                    if (tricepAngle > 160 && !isCounting) {
+                        isCounting = true;
+                        reps++;
+                    } else if (tricepAngle < 120) {
+                        isCounting = false;
+                    }
+                    break;
+                    
+                case 'lateral_raise':
+                    // Check arm angle and shoulder position
+                    const raiseAngle = calculateAngle(
+                        landmarks[12], // Left shoulder
+                        landmarks[14], // Left elbow
+                        landmarks[16]  // Left wrist
+                    );
+                    
+                    if (raiseAngle > 80 && raiseAngle < 100) {
+                        feedback = 'Perfect form! Keep your arms parallel to the ground.';
+                        formScore = 100;
+                    } else if (raiseAngle > 60 && raiseAngle < 120) {
+                        feedback = 'Good form! Focus on keeping your arms level.';
+                        formScore = 80;
+                        isGoodForm = false;
+                    } else {
+                        feedback = 'Raise your arms to shoulder height! Keep them straight.';
+                        formScore = 60;
+                        isGoodForm = false;
+                    }
+                    
+                    // Count reps when arms are at shoulder height
+                    if (raiseAngle > 80 && raiseAngle < 100 && !isCounting) {
+                        isCounting = true;
+                        reps++;
+                    } else if (raiseAngle < 60) {
+                        isCounting = false;
+                    }
+                    break;
+                    
+                case 'romanian_deadlift':
+                    // Check hip angle and back alignment
+                    const rdlHipAngle = calculateAngle(
+                        landmarks[12], // Left shoulder
+                        landmarks[24], // Left hip
+                        landmarks[26]  // Left knee
+                    );
+                    
+                    if (rdlHipAngle > 150) {
+                        feedback = 'Perfect form! Keep your back straight and chest up.';
+                        formScore = 100;
+                    } else if (rdlHipAngle > 120) {
+                        feedback = 'Good form! Focus on keeping your back straight.';
+                        formScore = 80;
+                        isGoodForm = false;
+                    } else {
+                        feedback = 'Keep your back straight! Push your hips back.';
+                        formScore = 60;
+                        isGoodForm = false;
+                    }
+                    
+                    // Count reps when returning to standing position
+                    if (rdlHipAngle > 170 && !isCounting) {
+                        isCounting = true;
+                        reps++;
+                    } else if (rdlHipAngle < 150) {
+                        isCounting = false;
+                    }
+                    break;
+                    
+                case 'hip_thrust':
+                    // Check hip angle and back alignment
+                    const thrustHipAngle = calculateAngle(
+                        landmarks[12], // Left shoulder
+                        landmarks[24], // Left hip
+                        landmarks[26]  // Left knee
+                    );
+                    
+                    if (thrustHipAngle > 170) {
+                        feedback = 'Perfect form! Squeeze your glutes at the top.';
+                        formScore = 100;
+                    } else if (thrustHipAngle > 150) {
+                        feedback = 'Good form! Focus on full hip extension.';
+                        formScore = 80;
+                        isGoodForm = false;
+                    } else {
+                        feedback = 'Push your hips higher! Squeeze your glutes.';
+                        formScore = 60;
+                        isGoodForm = false;
+                    }
+                    
+                    // Count reps when hips are fully extended
+                    if (thrustHipAngle > 170 && !isCounting) {
+                        isCounting = true;
+                        reps++;
+                    } else if (thrustHipAngle < 150) {
+                        isCounting = false;
+                    }
+                    break;
+            }
+            
+            return {
+                feedback,
+                isGoodForm,
+                formScore,
+                reps
+            };
+        }
+        
+        // Helper function to calculate angle between three points
+        function calculateAngle(a, b, c) {
+            const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+            let angle = Math.abs(radians * 180.0 / Math.PI);
+            if (angle > 180.0) {
+                angle = 360 - angle;
+            }
+            return angle;
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %} 
